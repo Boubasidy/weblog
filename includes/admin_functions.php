@@ -86,29 +86,6 @@ function deleteUserById($id) {
     $conn->close();
     return $success;
 }
-
-// Exemple : supprimer un poste par ID
-function deletePosteById($id)
-{
-    $conn = getDBConnection(); 
-    $stmt = $conn->prepare("DELETE FROM posts where id = ?");
-    $stmt->bind_param("i" , $id); 
-    $success = $stmt->execute(); 
-    $stmt->close(); 
-    $conn->close(); 
-    return $success;
-}
-
-// Mettre à jour un poste 
-function updatePoste($id, $title , $slug , $views , $image , $body) {
-    $conn = getDBConnection();
-    $stmt = $conn->prepare("UPDATE posts SET username = ?, email = ? WHERE id = ?");
-    $stmt->bind_param("ssi", $username, $email, $id);
-    $success = $stmt->execute();
-    $stmt->close();
-    $conn->close();
-    return $success;
-}
 // recuperation  des roles 
 function getAdminRoles() {
     $conn = getDBConnection(); 

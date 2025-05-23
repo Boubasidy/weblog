@@ -41,6 +41,56 @@
 
         return $success;
     }
+   // Exemple : supprimer un poste par ID
+    function deletePosteById($id)
+    {
+        $conn = getDBConnection();
+        if (!$conn) {
+            die("Erreur de connexion à la base de données.");
+        }
+
+        $stmt = $conn->prepare("DELETE FROM posts WHERE id = ?");
+        if (!$stmt) {
+            die("Erreur préparation requête : " . $conn->error);
+        }
+
+        $stmt->bind_param("i", $id);
+
+        $success = $stmt->execute();
+
+        if (!$success) {
+            echo "Erreur d'exécution : " . $stmt->error;
+        }
+
+        $stmt->close();
+        $conn->close();
+
+        return $success;
+    }
+// pour editer un post
+    function updatePost($id, $title, $slug, $views, $image, $body, $published, $topic_id) {
+        $conn = getDBConnection();
+
+        $sql = "UPDATE posts SET title = ?, slug = ?, views = ?, image = ?, body = ?, published = ?, topic_id = ?, updated_at = NOW() WHERE id = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            die("Erreur préparation requête : " . $conn->error);
+        }
+
+        $stmt->bind_param("ssisiiii", $title, $slug, $views, $image, $body, $published, $topic_id, $id);
+
+        $success = $stmt->execute();
+
+        if (!$success) {
+            echo "Erreur lors de la mise à jour : " . $stmt->error;
+        }
+
+        $stmt->close();
+        $conn->close();
+
+        return $success;
+    }
 
 ?>
 

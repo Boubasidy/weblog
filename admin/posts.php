@@ -22,6 +22,23 @@ if ($result && $result->num_rows > 0) {
         $posts[] = $row;
     }
 }
+// recuperation du role de l'utilisateur 
+$user_id = $_SESSION['user_id']; // attention à la faute de frappe $_SESSSION
+
+$sql = "
+    SELECT r.name AS role
+    FROM users u
+    JOIN role_user ru ON ru.user_id = u.id
+    JOIN roles r ON r.id = ru.role_id
+    WHERE u.id = ?
+";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$role = $result->fetch_assoc()['role'] ?? null;
+
+$stmt->close();
 
 $conn->close();
 ?>
@@ -57,9 +74,9 @@ $conn->close();
                             <td><?php echo htmlspecialchars($post['author']); ?></td>
                             <td><?php echo $post['published'] ? 'Oui' : 'Non'; ?></td>
                             <td>
-                                <a href="edit_post.php?id=<?php echo $post['id']; ?>" class="edit">Modifier</a>
+                                <a href="edit_post.php?id=<?php echo $post['id']; ?>&role=<?php echo $role ?>" class="edit">Modifier</a>
                                 &nbsp;
-                                <a href="delete_post.php?id=<?php echo $post['id']; ?>" class="delete" onclick="return confirm('Supprimer cet article ?')">Supprimer</a>
+                                <a href="delete_post.php?id=<?php echo $post['id']; ?>&role=<?php echo $role?>" class="delete" onclick="return confirm('Supprimer cet article ?')">Supprimer</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

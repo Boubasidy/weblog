@@ -1,4 +1,5 @@
-<?php session_start();
+<?php 
+session_start();
 ?>
 <?php  include('../config.php'); ?>
 <?php  include(ROOT_PATH . '/includes/admin_functions.php'); ?>
@@ -47,7 +48,6 @@ if (isset($_POST['create_post'])) {
 		$image = null;
 	}
 	
-
     // Si pas d'erreurs, enregistrer le post
     if (count($errors) == 0) {
         // Générer un slug
