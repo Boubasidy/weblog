@@ -74,7 +74,7 @@ $conn->close();
                             <td><?php echo htmlspecialchars($post['author']); ?></td>
                             <td><?php echo $post['published'] ? 'Oui' : 'Non'; ?></td>
                             <td>
-                                <a href="edit_post.php?id=<?php echo $post['id']; ?>&role=<?php echo $role ?>" class="edit">Modifier</a>
+                                <a href="edit_post.php?id=<?php echo $post['id']; ?>&role=<?php echo $role ?>&edit-post=<?php echo "TRUE" ?>" class="edit">Modifier</a>
                                 &nbsp;
                                 <a href="delete_post.php?id=<?php echo $post['id']; ?>&role=<?php echo $role?>" class="delete" onclick="return confirm('Supprimer cet article ?')">Supprimer</a>
                             </td>

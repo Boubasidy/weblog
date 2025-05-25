@@ -55,7 +55,7 @@ if (isset($_POST['create_post'])) {
 
         // Utilisateur connecté 
         $user_id = $_SESSION['user_id'];
-        $success = createPost($user_id, $title, $slug, $image, $body, $published);
+        $success = createPost($user_id, $title, $slug, $image, $body, $published, $topic_id);
         if ($success) {
             $_SESSION['message'] = "Le post a été créé avec succès.";
             header('Location: posts.php');
