@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: php-apache
+    volumes:
+      - ./public:/var/www/html
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.6
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: weblog
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db         # Le nom du service MariaDB dans Docker 
+      PMA_PORT: 3306       # Port de MariaDB dans le conteneur
+      PMA_USER: root       # utilisateur à utiliser 
+      PMA_PASSWORD: root   # Mot de passe root défini dans MariaDB
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+
+volumes:
+  db-data:
