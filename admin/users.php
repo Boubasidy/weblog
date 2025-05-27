@@ -1,8 +1,9 @@
 <?php
 session_start();
 include('../config.php');
-include(ROOT_PATH . '/includes/admin_functions.php');
-include(ROOT_PATH . '/includes/public/functions.php');
+include __DIR__ . '/../includes/admin_functions.php';
+include __DIR__ . '/../includes/public/functions.php';
+
 
 // Suppression d’un utilisateur admin
 if (isset($_GET['delete-admin'])) {

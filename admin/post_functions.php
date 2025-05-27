@@ -146,6 +146,33 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published) {
         }
     }
 
+    // recupere tous les topics 
+    function getAllPosts()
+{
+    $conn = getDBConnection();
+    $posts = [];
+
+    $sql = "SELECT p.id, p.title, p.slug, p.image, p.body, p.published, p.created_at, p.updated_at,
+                   u.username AS author, t.name AS topic
+            FROM posts p
+            LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN post_topic pt ON p.id = pt.post_id
+            LEFT JOIN topics t ON pt.topic_id = t.id
+            ORDER BY p.created_at DESC";
+
+    $result = $conn->query($sql);
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $posts[] = $row;
+        }
+    }
+
+    $conn->close();
+    return $posts;
+}
+
+
 ?>
 
 
