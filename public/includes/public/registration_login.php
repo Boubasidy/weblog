@@ -1,6 +1,8 @@
 <?php
-session_start();
-include('config.php');
+include(__DIR__ . '/../../config.php');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) {
@@ -48,9 +50,9 @@ if (isset($_POST['login_btn'])) {
 
                 // Redirection selon rôle
                 if ($db_role === 'Admin') {
-                    header('Location: ../weblog_v0/admin/dashboard.php');
+                    header('Location: /admin/dashboard.php');
                 } else {
-                    header('Location: index.php');
+                    header('Location: /index.php');
                 }
                 exit;
             } else {

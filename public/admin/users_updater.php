@@ -1,19 +1,30 @@
 <?php
-session_start();
+// Démarrage sécurisé de la session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 include('../config.php');
 include('../includes/admin_functions.php');
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// Traitement du formulaire
-$errors = [];
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
-    $user_id = $_POST['id'];
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
 
-    if (empty($username)) $errors[] = "Le nom d'utilisateur est requis.";
-    if (empty($email)) $errors[] = "L'email est requis.";
+// Pour debug, à activer seulement en dev
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
+$errors = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
+    $user_id = $_POST['id'] ?? null;
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+
+    if (empty($username)) {
+        $errors[] = "Le nom d'utilisateur est requis.";
+    }
+    if (empty($email)) {
+        $errors[] = "L'email est requis.";
+    }
 
     if (empty($errors)) {
         if (updateUser($user_id, $username, $email)) {
@@ -26,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     }
 }
 
-// Charger les données à éditer
+// Charger les données à éditer (via GET edit-admin)
 if (isset($_GET['edit-admin'])) {
     $user = getUserById($_GET['edit-admin']);
     if (!$user) {
@@ -35,41 +46,51 @@ if (isset($_GET['edit-admin'])) {
 } else {
     die("Aucun ID fourni.");
 }
+
+// Fonction d'échappement HTML 
+if (!function_exists('e')) {
+    function e($string) {
+        return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    }
+}
 ?>
 
 <?php include(ROOT_PATH . '/includes/admin/head_section.php'); ?>
+<title>Modifier Utilisateur</title>
 </head>
 
 <body>
 <?php include(ROOT_PATH . '/includes/admin/header.php') ?>
+
 <h2 style="text-align: center;">Modifier Utilisateur</h2>
 
-    <?php if (!empty($errors)): ?>
-        <div class="error">
-            <ul>
-                <?php foreach ($errors as $err): ?>
-                    <li><?= e($err) ?></li>
-                <?php endforeach ?>
-            </ul>
-        </div>
-    <?php endif ?>
+<?php if (!empty($errors)) : ?>
+    <div class="error" style="color: red; text-align: center; margin-bottom: 1em;">
+        <ul>
+            <?php foreach ($errors as $err) : ?>
+                <li><?= e($err) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 
-    <form method="POST" action="users_updater.php?id=<?= e($user['id']) ?>">
-        <input type="hidden" name="id" value="<?= e($user['id']) ?>">
+<form method="POST" action="users_updater.php?edit-admin=<?= e($user['id']) ?>">
+    <input type="hidden" name="id" value="<?= e($user['id']) ?>">
 
-        <div class="form-group">
-            <label>Nom d'utilisateur</label>
-            <input type="text" name="username" value="<?= e($user['username']) ?>">
-        </div>
+    <div class="form-group">
+        <label for="username">Nom d'utilisateur</label><br>
+        <input id="username" type="text" name="username" value="<?= e($user['username']) ?>" required>
+    </div>
 
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" value="<?= e($user['email']) ?>">
-        </div>
+    <div class="form-group">
+        <label for="email">Email</label><br>
+        <input id="email" type="email" name="email" value="<?= e($user['email']) ?>" required>
+    </div>
 
-        <button type="submit" name="update_user">Mettre à jour</button>
-    </form>
+    <button type="submit" name="update_user">Mettre à jour</button>
+</form>
 
-    <p style="text-align : center;"><a href="users.php">← Retour à la liste</a></p>
+<p style="text-align: center; margin-top: 1em;"><a href="users.php">← Retour à la liste</a></p>
+
 </body>
 </html>

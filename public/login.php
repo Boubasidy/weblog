@@ -1,10 +1,7 @@
-<?php include('config.php'); ?>
-
-<?php include('includes/public/registration_login.php'); ?>
-
-
-
-<?php include('includes/public/head_section.php'); ?>
+<?php
+include('config.php');
+include('includes/public/head_section.php'); 
+?>
 
 <title>MyWebSite | Sign in </title>
 </head>
@@ -19,7 +16,8 @@
 
 
 		<div style="width: 40%; margin: 20px auto;">
-			<form method="post" action="login.php">
+			<!-- <form method="post" action="login.php"> -->
+			<form method="post" action="includes/public/registration_login.php">
 				<h2>Login</h2>
 				<?php include(ROOT_PATH . '/includes/public/errors.php') ?>
 				<input type="text" name="username" placeholder="Username">

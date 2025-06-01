@@ -1,7 +1,8 @@
 <?php
-session_start();
 include('../config.php');
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 // Connexion à la base, à appeler dans les fonctions
 function getDBConnection() {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -149,7 +150,4 @@ function getOthers() {
     return $others;
 }
 
-// Plus bas, fonctions pour créer/modifier/supprimer un admin user à compléter selon ton besoin
-
-// Tu peux rajouter d’autres fonctions CRUD pour posts, topics, etc.
 ?>

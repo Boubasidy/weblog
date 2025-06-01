@@ -17,7 +17,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: weblog
+      MYSQL_DATABASE: auth
       MYSQL_USER: user
       MYSQL_PASSWORD: user
     volumes:
