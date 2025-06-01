@@ -1,27 +1,25 @@
 <?php
 // Initialisation sécurisée de la session
 if (session_status() === PHP_SESSION_NONE) {
-    session_start(); //DCKR
+    session_start();
 }
 
 // Inclusion des dépendances essentielles
-require_once('../config.php'); //DCKR
-require_once('../includes/admin_functions.php'); 
-require_once('../includes/admin/header.php'); //DCKR
-require_once('../includes/admin/head_section.php'); //DCKR
+require_once('../config.php');
+require_once('../includes/admin_functions.php');
+require_once('../includes/admin/header.php');
+require_once('../includes/admin/head_section.php');
 
 // Vérification que l'utilisateur est connecté
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ../login.php'); //DCKR redirection sécurisée
+    header('Location: ../login.php');
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Connexion base de données
+// Connexion à la base de données
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) {
-    die("Erreur de connexion à la base : " . $conn->connect_error); //DCKR
+    die("Erreur de connexion à la base : " . $conn->connect_error);
 }
 
 // Récupération de tous les articles
@@ -35,7 +33,8 @@ if ($result && $result->num_rows > 0) {
     }
 }
 
-// Récupération du rôle de l’utilisateur
+// Récupération du rôle de l'utilisateur
+$user_id = $_SESSION['user_id'];
 $sqlRole = "
     SELECT r.name AS role
     FROM users u
@@ -45,7 +44,7 @@ $sqlRole = "
 ";
 $stmt = $conn->prepare($sqlRole);
 if (!$stmt) {
-    die("Erreur préparation rôle : " . $conn->error); //DCKR
+    die("Erreur préparation rôle : " . $conn->error);
 }
 
 $stmt->bind_param("i", $user_id);
@@ -54,13 +53,13 @@ $result = $stmt->get_result();
 $role = $result->fetch_assoc()['role'] ?? null;
 
 $stmt->close();
-$conn->close(); //DCKR
+$conn->close();
 ?>
 
 <body>
     <div class="container content">
         <!-- Menu -->
-        <?php include('../includes/admin/menu.php'); //DCKR ?>
+        <?php include('../includes/admin/menu.php'); ?>
 
         <!-- Contenu principal -->
         <div class="table-div" style="width: 80%; margin: 0 auto;">
@@ -86,7 +85,7 @@ $conn->close(); //DCKR
                             <td><?= htmlspecialchars($post['author'] ?? '—') ?></td>
                             <td><?= $post['published'] ? 'Oui' : 'Non' ?></td>
                             <td>
-                                <a href="edit_post.php?id=<?= $post['id'] ?>&role=<?= urlencode($role) ?>" class="edit">Modifier</a>
+                                <a href="edit_post.php?id=<?= $post['id'] ?>&role=<?= urlencode($role) ?>&edit-post=TRUE" class="edit">Modifier</a>
                                 &nbsp;
                                 <a href="delete_post.php?id=<?= $post['id'] ?>&role=<?= urlencode($role) ?>" class="delete" onclick="return confirm('Supprimer cet article ?')">Supprimer</a>
                             </td>

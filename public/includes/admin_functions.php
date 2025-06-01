@@ -1,8 +1,14 @@
 <?php
-include('../config.php');
+// Inclusion de la config (Docker & non-Docker compatibles)
+if (!defined('DB_HOST')) {
+    include_once __DIR__ . '/../config.php';
+}
+
+// Démarrer la session si non déjà active
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 // Connexion à la base, à appeler dans les fonctions
 function getDBConnection() {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -22,13 +28,14 @@ function adminOnly() {
 
 // Fonction pour sécuriser l'affichage (échapper les sorties)
 function e($string) {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// Exemple : récupérer tous les utilisateurs
+// Récupérer tous les utilisateurs
 function getAllUsers() {
     $conn = getDBConnection();
     $users = [];
+
     $sql = "SELECT id, username, email, role FROM users ORDER BY id DESC";
     $result = $conn->query($sql);
 
@@ -42,7 +49,7 @@ function getAllUsers() {
     return $users;
 }
 
-// Exemple : récupérer un utilisateur par ID
+// Récupérer un utilisateur par ID
 function getUserById($id) {
     $conn = getDBConnection();
 
@@ -77,7 +84,7 @@ function updateUser($id, $username, $email) {
     return $success;
 }
 
-// Exemple : supprimer un utilisateur par ID
+// Supprimer un utilisateur par ID
 function deleteUserById($id) {
     $conn = getDBConnection();
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
@@ -87,12 +94,13 @@ function deleteUserById($id) {
     $conn->close();
     return $success;
 }
-// recuperation  des roles 
+
+// Récupération des rôles
 function getAdminRoles() {
     $conn = getDBConnection(); 
     $roles = [];
 
-    $sql = "SELECT * from roles";
+    $sql = "SELECT * FROM roles";
     $result = $conn->query($sql);
     if ($result && $result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
@@ -102,7 +110,8 @@ function getAdminRoles() {
     $conn->close();
     return $roles;
 }
-// recuperation des admins
+
+// Récupération des admins
 function getAdminUsers() {
     $conn = getDBConnection();
     $admins = [];
@@ -126,7 +135,7 @@ function getAdminUsers() {
     return $admins;
 }
 
-// recuperation des Authors
+// Récupération des Authors et Subscribers
 function getOthers() {
     $conn = getDBConnection();
     $others = [];
@@ -136,7 +145,7 @@ function getOthers() {
         FROM users u
         JOIN role_user ru ON ru.user_id = u.id
         JOIN roles r ON r.id = ru.role_id
-        WHERE r.name = 'Author'
+        WHERE r.name IN ('Author', 'Subscriber')
     ";
 
     $result = $conn->query($sql);
@@ -148,6 +157,41 @@ function getOthers() {
 
     $conn->close();
     return $others;
+}
+
+// Inserer un topic
+function insertTopic($name, $slug)
+{
+    $conn = getDBConnection();
+
+    // 1. Récupérer l'id max
+    $result = $conn->query("SELECT MAX(id) as max_id FROM topics");
+    if (!$result) {
+        die("Erreur lors de la récupération de l'id max : " . $conn->error);
+    }
+    $row = $result->fetch_assoc();
+    $new_id = $row['max_id'] ? $row['max_id'] + 1 : 1;  // si pas de topic, on commence à 1
+
+    // 2. Préparer la requête avec l'id fourni
+    $sql = "INSERT INTO topics (id, name, slug) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Erreur préparation requête : " . $conn->error);
+    }
+
+    $stmt->bind_param("iss", $new_id, $name, $slug);
+    $success = $stmt->execute();
+
+    if ($success) {
+        $_SESSION['message'] = "Topic ajouté avec succès !";
+        header("Location: topics.php");
+        exit;
+    } else {
+        die("Erreur lors de l'insertion : " . $stmt->error);
+    }
+
+    $stmt->close();
+    $conn->close();
 }
 
 ?>

@@ -1,14 +1,15 @@
 <?php
-// DCKR : Vérification de l’état de session avant de l’ouvrir
+// DCKR : Démarrage de session sécurisé
 if (session_status() === PHP_SESSION_NONE) {
-    session_start(); // DCKR : Correction du démarrage de session sécurisé
+    session_start();
 }
+?>
+<?php include('../config.php'); ?>
+<?php include(ROOT_PATH . '/includes/admin_functions.php'); ?>
+<?php include(ROOT_PATH . '/admin/post_functions.php'); ?>
+<?php include(ROOT_PATH . '/includes/admin/head_section.php'); ?>
 
-include('../config.php');
-include(ROOT_PATH . '/includes/admin_functions.php');
-include(ROOT_PATH . '/admin/post_functions.php');
-include(ROOT_PATH . '/includes/admin/head_section.php');
-
+<?php
 // Get all topics
 $topics = getAllTopics();
 ?>
@@ -50,10 +51,10 @@ if (isset($_POST['create_post'])) {
     if (count($errors) == 0) {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         $user_id = $_SESSION['user_id'];
-        $success = createPost($user_id, $title, $slug, $image, $body, $published);
+        $success = createPost($user_id, $title, $slug, $image, $body, $published, $topic_id);
         if ($success) {
             $_SESSION['message'] = "Le post a été créé avec succès.";
-            header('Location: posts.php'); // DCKR 
+            header('Location: posts.php');
             exit();
         } else {
             $errors[] = "Échec lors de la création du post.";

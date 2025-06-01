@@ -56,41 +56,39 @@ if (!function_exists('e')) {
 ?>
 
 <?php include(ROOT_PATH . '/includes/admin/head_section.php'); ?>
-<title>Modifier Utilisateur</title>
 </head>
 
 <body>
-<?php include(ROOT_PATH . '/includes/admin/header.php') ?>
+    <?php include(ROOT_PATH . '/includes/admin/header.php') ?>
+    <h2 style="text-align: center;">Modifier Utilisateur</h2>
 
-<h2 style="text-align: center;">Modifier Utilisateur</h2>
+    <?php if (!empty($errors)): ?>
+        <div class="error">
+            <ul>
+                <?php foreach ($errors as $err): ?>
+                    <li><?= e($err) ?></li>
+                <?php endforeach ?>
+            </ul>
+        </div>
+    <?php endif ?>
 
-<?php if (!empty($errors)) : ?>
-    <div class="error" style="color: red; text-align: center; margin-bottom: 1em;">
-        <ul>
-            <?php foreach ($errors as $err) : ?>
-                <li><?= e($err) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
+    <form method="POST" action="users_updater.php?id=<?= e($user['id']) ?>">
+        <input type="hidden" name="id" value="<?= e($user['id']) ?>">
 
-<form method="POST" action="users_updater.php?edit-admin=<?= e($user['id']) ?>">
-    <input type="hidden" name="id" value="<?= e($user['id']) ?>">
+        <div class="form-group">
+            <label>Nom d'utilisateur</label>
+            <input type="text" name="username" value="<?= e($user['username']) ?>">
+        </div>
 
-    <div class="form-group">
-        <label for="username">Nom d'utilisateur</label><br>
-        <input id="username" type="text" name="username" value="<?= e($user['username']) ?>" required>
-    </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" value="<?= e($user['email']) ?>">
+        </div>
 
-    <div class="form-group">
-        <label for="email">Email</label><br>
-        <input id="email" type="email" name="email" value="<?= e($user['email']) ?>" required>
-    </div>
+        <button type="submit" name="update_user">Mettre à jour</button>
+    </form>
 
-    <button type="submit" name="update_user">Mettre à jour</button>
-</form>
-
-<p style="text-align: center; margin-top: 1em;"><a href="users.php">← Retour à la liste</a></p>
-
+    <p style="text-align : center;"><a href="users.php">← Retour à la liste</a></p>
 </body>
+
 </html>

@@ -1,4 +1,5 @@
 <?php
+ob_start();
 //Create session per user:
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

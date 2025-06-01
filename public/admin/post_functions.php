@@ -1,9 +1,12 @@
 <?php
-// DCKR : Vérification de l’état de session avant de l’ouvrir
+// Vérifie si une session est déjà active
 if (session_status() === PHP_SESSION_NONE) {
-    session_start(); // DCKR : Démarrage de session sécurisé
+    session_start();
 }
-include('../config.php');
+
+include(__DIR__ . '/../config.php');
+
+// Connexion à la BDD incluse via config.php
 
 // Récupère tous les sujets depuis la BDD
 function getAllTopics()
@@ -29,20 +32,19 @@ function createPost($user_id, $title, $slug, $image, $body, $published, $topic_i
 {
     $conn = getDBConnection();
 
-    // Étape 1 : Insertion dans la table `posts`
     $sql = "INSERT INTO posts (user_id, title, slug, views, image, body, published, created_at, updated_at)
             VALUES (?, ?, ?, 0, ?, ?, ?, NOW(), NOW())";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        die("Erreur de préparation de la requête : " . $conn->error); // DCKR
+        die("Erreur préparation : " . $conn->error);
     }
 
     $stmt->bind_param("issssi", $user_id, $title, $slug, $image, $body, $published);
     $success = $stmt->execute();
 
     if (!$success) {
-        echo "Erreur lors de l'insertion : " . $stmt->error;
+        echo "Erreur lors de l'insertion du post : " . $stmt->error;
         $stmt->close();
         $conn->close();
         return false;
@@ -51,7 +53,6 @@ function createPost($user_id, $title, $slug, $image, $body, $published, $topic_i
     $post_id = $stmt->insert_id;
     $stmt->close();
 
-    // Étape 2 : Association avec un topic dans `post_topic`
     $sql2 = "INSERT INTO post_topic (post_id, topic_id) VALUES (?, ?)";
     $stmt2 = $conn->prepare($sql2);
     if (!$stmt2) {
@@ -63,12 +64,15 @@ function createPost($user_id, $title, $slug, $image, $body, $published, $topic_i
 
     if (!$success_topic) {
         echo "Erreur lors de l'association post/topic : " . $stmt2->error;
+        $stmt2->close();
+        $conn->close();
+        return false;
     }
 
     $stmt2->close();
     $conn->close();
 
-    return $success_topic ? $post_id : false;
+    return $post_id;
 }
 
 // Supprime un post par son ID
@@ -76,12 +80,12 @@ function deletePosteById($id)
 {
     $conn = getDBConnection();
     if (!$conn) {
-        die("Erreur de connexion à la base de données."); // DCKR
+        die("Erreur de connexion à la base de données.");
     }
 
     $stmt = $conn->prepare("DELETE FROM posts WHERE id = ?");
     if (!$stmt) {
-        die("Erreur de préparation de la requête : " . $conn->error); // DCKR
+        die("Erreur préparation requête : " . $conn->error);
     }
 
     $stmt->bind_param("i", $id);
@@ -108,7 +112,7 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published, $topi
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        die("Erreur de préparation de la requête : " . $conn->error); // DCKR
+        die("Erreur préparation requête : " . $conn->error);
     }
 
     $stmt->bind_param("ssisiii", $title, $slug, $views, $image, $body, $published, $id);
@@ -121,7 +125,6 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published, $topi
         return false;
     }
 
-    // Met à jour ou insère le topic dans `post_topic`
     $sql2 = "REPLACE INTO post_topic (post_id, topic_id) VALUES (?, ?)";
     $stmt2 = $conn->prepare($sql2);
     if (!$stmt2) {
@@ -141,26 +144,43 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published, $topi
     return $success2;
 }
 
-// Récupère un post par son ID
+// Récupère un post par son ID avec auteur
 function getPostById($id)
 {
     $conn = getDBConnection();
 
-    $stmt = $conn->prepare("SELECT * FROM posts WHERE id = ?");
-    if (!$stmt) {
-        die("Erreur de préparation : " . $conn->error); // DCKR
+    $sql = "SELECT 
+                p.id, 
+                p.title, 
+                p.slug, 
+                p.image, 
+                p.body, 
+                p.published, 
+                p.created_at, 
+                p.updated_at,
+                GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') AS author
+            FROM posts p
+            LEFT JOIN post_user pu ON p.id = pu.post_id
+            LEFT JOIN users u ON pu.user_id = u.id
+            WHERE p.id = ?
+            GROUP BY p.id";
+
+    $stmt = $conn->prepare($sql);
+
+    if ($stmt === false) {
+        die("Erreur de préparation de la requête : " . $conn->error);
     }
 
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
     $result = $stmt->get_result();
-    $post = $result->fetch_assoc();
 
-    $stmt->close();
-    $conn->close();
-
-    return $post ?: null;
+    if ($result->num_rows === 1) {
+        return $result->fetch_assoc();
+    } else {
+        return null;
+    }
 }
 
 // Récupère tous les posts
@@ -169,12 +189,23 @@ function getAllPosts()
     $conn = getDBConnection();
     $posts = [];
 
-    $sql = "SELECT p.id, p.title, p.slug, p.image, p.body, p.published, p.created_at, p.updated_at,
-                   u.username AS author, t.name AS topic
+    $sql = "SELECT 
+                p.id, 
+                p.title, 
+                p.slug, 
+                p.image, 
+                p.body, 
+                p.published, 
+                p.created_at, 
+                p.updated_at,
+                GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') AS author,
+                t.name AS topic
             FROM posts p
-            LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN post_user pu ON p.id = pu.post_id
+            LEFT JOIN users u ON pu.user_id = u.id
             LEFT JOIN post_topic pt ON p.id = pt.post_id
             LEFT JOIN topics t ON pt.topic_id = t.id
+            GROUP BY p.id
             ORDER BY p.created_at DESC";
 
     $result = $conn->query($sql);
@@ -186,6 +217,42 @@ function getAllPosts()
     }
 
     $conn->close();
+    return $posts;
+}
+
+// Récupère tous les posts d’un topic donné
+function getPostsByTopic($topic_slug)
+{
+    $conn = getDBConnection();
+    $posts = [];
+
+    $sql = "SELECT p.id, p.title, p.slug, p.image, p.body, p.published, p.created_at, p.updated_at,
+                   u.username AS author, t.name AS topic
+            FROM posts p
+            INNER JOIN post_topic pt ON p.id = pt.post_id
+            INNER JOIN topics t ON pt.topic_id = t.id
+            LEFT JOIN users u ON p.user_id = u.id
+            WHERE t.slug = ?
+            ORDER BY p.created_at DESC";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Erreur préparation requête : " . $conn->error);
+    }
+
+    $stmt->bind_param("s", $topic_slug);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $posts[] = $row;
+        }
+    }
+
+    $stmt->close();
+    $conn->close();
+
     return $posts;
 }
 ?>

@@ -1,31 +1,29 @@
 <?php
-//DCKR : Vérifie que la session n’est pas déjà démarrée
 if (session_status() === PHP_SESSION_NONE) {
-    session_start(); //DCKR : session_start sécurisé
+    session_start();
 }
 
-include('../config.php');
+include_once(__DIR__ . '/../config.php');
 include(ROOT_PATH . '/includes/admin_functions.php');
-//include(ROOT_PATH . '/includes/public/functions.php');
 
-// Suppression d’un utilisateur
+// Suppression d’un utilisateur (admin ou non)
 if (isset($_GET['delete-admin'])) {
-    $admin_id = intval($_GET['delete-admin']); //DCKR : Sécurisation ID
+    $admin_id = intval($_GET['delete-admin']);
     $admin_role = isset($_GET['delete-role']) ? $_GET['delete-role'] : "";
 
     if (deleteUserById($admin_id)) {
-        $_SESSION['message'] = ($admin_role === "Admin")
-            ? "Admin supprimé avec succès."
-            : "Utilisateur supprimé avec succès.";
+        $_SESSION['message'] = ($admin_role === "Admin") ?
+            "Admin supprimé avec succès." :
+            "Utilisateur supprimé avec succès.";
         $_SESSION['type'] = "success";
     } else {
-        $_SESSION['message'] = ($admin_role === "Admin")
-            ? "Erreur lors de la suppression de l’admin."
-            : "Erreur lors de la suppression de l’utilisateur.";
+        $_SESSION['message'] = ($admin_role === "Admin") ?
+            "Erreur lors de la suppression de l’admin." :
+            "Erreur lors de la suppression de l’utilisateur.";
         $_SESSION['type'] = "error";
     }
 
-    header('Location: users.php'); //DCKR : Redirection après suppression
+    header('Location: users.php');
     exit;
 }
 
@@ -37,12 +35,12 @@ $admin_id = 0;
 $errors = [];
 $role_id = "";
 
-// Rôles et utilisateurs
-$roles = getAdminRoles(); //DCKR : potentiellement inutile ici
+// Récupération des données
+$roles = getAdminRoles();
 $admins = getAdminUsers();
 $others = getOthers();
 
-// Création d’un utilisateur admin
+// Création d’un utilisateur
 if (isset($_POST['create_admin'])) {
     $username = trim($_POST['username']);
     $email = trim($_POST['email']);
@@ -61,7 +59,7 @@ if (isset($_POST['create_admin'])) {
         $conn = getDBConnection();
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        // Recherche du rôle par nom ou id
+        // Recherche rôle
         if (is_numeric($role_input)) {
             $role_id = (int)$role_input;
         } else {
@@ -78,14 +76,12 @@ if (isset($_POST['create_admin'])) {
         }
 
         if (count($errors) === 0) {
-            // Insertion utilisateur
             $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $username, $email, $passwordHash);
             $stmt->execute();
             $user_id = $stmt->insert_id;
             $stmt->close();
 
-            // Liaison rôle
             $stmt = $conn->prepare("INSERT INTO role_user (user_id, role_id) VALUES (?, ?)");
             $stmt->bind_param("ii", $user_id, $role_id);
             $stmt->execute();
@@ -94,8 +90,8 @@ if (isset($_POST['create_admin'])) {
             $conn->close();
 
             $_SESSION['message'] = "Nouvel utilisateur créé avec succès";
-            $_SESSION['type'] = "success"; //DCKR : Ajout du type
-            header("Location: users.php"); //DCKR : Redirection propre
+            $_SESSION['type'] = "success";
+            header("Location: users.php");
             exit;
         } else {
             $conn->close();
@@ -108,18 +104,16 @@ if (isset($_POST['create_admin'])) {
 <title>Admin | Gérer les utilisateurs</title>
 </head>
 <body>
-<?php include(ROOT_PATH . '/includes/admin/header.php') ?>
-
+<?php include(ROOT_PATH . '/includes/admin/header.php'); ?>
 <div class="container content">
-    <?php include(ROOT_PATH . '/includes/admin/menu.php') ?>
+    <?php include(ROOT_PATH . '/includes/admin/menu.php'); ?>
 
     <div class="action">
         <h1 class="page-title">Créer / Modifier un utilisateur</h1>
-
         <form method="post" action="users.php">
-            <?php include(ROOT_PATH . '/includes/public/errors.php') ?>
+            <?php include(ROOT_PATH . '/includes/public/errors.php'); ?>
 
-            <?php if ($isEditingUser === true) : ?>
+            <?php if ($isEditingUser) : ?>
                 <input type="hidden" name="admin_id" value="<?php echo htmlspecialchars($admin_id); ?>">
             <?php endif ?>
 
@@ -129,7 +123,7 @@ if (isset($_POST['create_admin'])) {
             <input type="password" name="passwordConfirmation" placeholder="Confirmation du mot de passe">
             <input type="text" name="role_id" value="<?php echo htmlspecialchars($role_id); ?>" placeholder="Rôle (Admin, Author...)">
 
-            <?php if ($isEditingUser === true) : ?>
+            <?php if ($isEditingUser) : ?>
                 <button type="submit" class="btn" name="update_admin">Modifier</button>
             <?php else : ?>
                 <button type="submit" class="btn" name="create_admin">Créer</button>
@@ -138,9 +132,10 @@ if (isset($_POST['create_admin'])) {
     </div>
 
     <div class="table-div">
-        <?php include(ROOT_PATH . '/includes/public/messages.php') ?>
+        <?php include(ROOT_PATH . '/includes/public/messages.php'); ?>
+        <h2>Administrateurs</h2>
         <?php if (empty($admins)) : ?>
-            <h1>Aucun administrateur trouvé.</h1>
+            <h3>Aucun administrateur trouvé.</h3>
         <?php else : ?>
             <table class="table">
                 <thead>
@@ -150,14 +145,9 @@ if (isset($_POST['create_admin'])) {
                     <?php foreach ($admins as $key => $admin) : ?>
                         <tr>
                             <td><?php echo $key + 1; ?></td>
-                            <td><?php echo htmlspecialchars($admin['username']) . ", " . htmlspecialchars($admin['email']); ?></td>
-                            <td><?php echo htmlspecialchars($admin['role']); ?></td>
-                            <td>
-                                <a class="fa fa-trash btn delete"
-                                   href="users.php?delete-admin=<?php echo $admin['id']; ?>&delete-role=<?php echo urlencode($admin['role']); ?>"
-                                   onclick="return confirm('Supprimer cet utilisateur ?');">
-                                </a>
-                            </td>
+                            <td><?php echo $admin['username']; ?>, <?php echo $admin['email']; ?></td>
+                            <td><?php echo $admin['role']; ?></td>
+                            <td><a class="fa fa-trash btn delete" href="users.php?delete-admin=<?php echo $admin['id']; ?>&delete-role=<?php echo $admin['role']; ?>" onclick="return confirm('Confirmer la suppression ?');"></a></td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
@@ -166,29 +156,23 @@ if (isset($_POST['create_admin'])) {
     </div>
 
     <div class="table-div">
-        <?php include(ROOT_PATH . '/includes/public/messages.php') ?>
+        <h2>Utilisateurs</h2>
+        <?php include(ROOT_PATH . '/includes/public/messages.php'); ?>
         <?php if (empty($others)) : ?>
-            <h1>Aucun utilisateur trouvé.</h1>
+            <h3>Aucun utilisateur trouvé.</h3>
         <?php else : ?>
             <table class="table">
                 <thead>
                     <th>N°</th><th>Utilisateur</th><th>Rôle</th><th colspan="2">Action</th>
                 </thead>
                 <tbody>
-                    <?php foreach ($others as $key => $admin) : ?>
+                    <?php foreach ($others as $key => $user) : ?>
                         <tr>
                             <td><?php echo $key + 1; ?></td>
-                            <td><?php echo htmlspecialchars($admin['username']) . ", " . htmlspecialchars($admin['email']); ?></td>
-                            <td><?php echo htmlspecialchars($admin['role']); ?></td>
-                            <td>
-                                <a class="fa fa-pencil btn edit" href="users_updater.php?edit-admin=<?php echo $admin['id']; ?>"></a>
-                            </td>
-                            <td>
-                                <a class="fa fa-trash btn delete"
-                                   href="users.php?delete-admin=<?php echo $admin['id']; ?>&delete-role=<?php echo urlencode($admin['role']); ?>"
-                                   onclick="return confirm('Supprimer cet utilisateur ?');">
-                                </a>
-                            </td>
+                            <td><?php echo $user['username']; ?>, <?php echo $user['email']; ?></td>
+                            <td><?php echo $user['role']; ?></td>
+                            <td><a class="fa fa-pencil btn edit" href="users_updater.php?edit-admin=<?php echo $user['id']; ?>"></a></td>
+                            <td><a class="fa fa-trash btn delete" href="users.php?delete-admin=<?php echo $user['id']; ?>&delete-role=<?php echo $user['role']; ?>" onclick="return confirm('Confirmer la suppression ?');"></a></td>
                         </tr>
                     <?php endforeach ?>
                 </tbody>
