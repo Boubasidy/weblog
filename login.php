@@ -1,5 +1,3 @@
-<?php include('config.php'); ?>
-
 <?php include('includes/public/registration_login.php'); ?>
 
 

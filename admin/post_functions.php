@@ -1,6 +1,4 @@
 <?php 
-    session_start();
-    include('../config.php');
     // retrieve all topics 
     function getAllTopics()
     {
@@ -123,41 +121,68 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published) {
 }
 
     // recuperer un poste par son id
-    function getPostById($id)
-    {
-        $conn = getDBConnection();
+function getPostById($id)
+{
+    $conn = getDBConnection();
 
-        $sql = "SELECT * FROM posts WHERE id = ?";
-        $stmt = $conn->prepare($sql);
+    $sql = "SELECT 
+                p.id, 
+                p.title, 
+                p.slug, 
+                p.image, 
+                p.body, 
+                p.published, 
+                p.created_at, 
+                p.updated_at,
+                GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') AS author
+            FROM posts p
+            LEFT JOIN post_user pu ON p.id = pu.post_id
+            LEFT JOIN users u ON pu.user_id = u.id
+            WHERE p.id = ?
+            GROUP BY p.id";
 
-        if ($stmt === false) {
-            die("Erreur de préparation de la requête : " . $conn->error);
-        }
+    $stmt = $conn->prepare($sql);
 
-        $stmt->bind_param("i", $id); // 'i' = entier
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-
-        if ($result->num_rows === 1) {
-            return $result->fetch_assoc(); // retourne le post sous forme de tableau associatif
-        } else {
-            return null; // ou false selon ton usage
-        }
+    if ($stmt === false) {
+        die("Erreur de préparation de la requête : " . $conn->error);
     }
 
+    $stmt->bind_param("i", $id); // 'i' = entier
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 1) {
+        return $result->fetch_assoc(); // retourne le post avec l’auteur
+    } else {
+        return null; // aucun post trouvé
+    }
+}
+
+
     // recupere tous les topics 
-    function getAllPosts()
+function getAllPosts()
 {
     $conn = getDBConnection();
     $posts = [];
 
-    $sql = "SELECT p.id, p.title, p.slug, p.image, p.body, p.published, p.created_at, p.updated_at,
-                   u.username AS author, t.name AS topic
+    $sql = "SELECT 
+                p.id, 
+                p.title, 
+                p.slug, 
+                p.image, 
+                p.body, 
+                p.published, 
+                p.created_at, 
+                p.updated_at,
+                GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') AS author,
+                t.name AS topic
             FROM posts p
-            LEFT JOIN users u ON p.user_id = u.id
+            LEFT JOIN post_user pu ON p.id = pu.post_id
+            LEFT JOIN users u ON pu.user_id = u.id
             LEFT JOIN post_topic pt ON p.id = pt.post_id
             LEFT JOIN topics t ON pt.topic_id = t.id
+            GROUP BY p.id
             ORDER BY p.created_at DESC";
 
     $result = $conn->query($sql);
@@ -172,6 +197,40 @@ function updatePost($id, $title, $slug, $views, $image, $body, $published) {
     return $posts;
 }
 
+// recuperer un poste correspondant à un topic
+function getPostsByTopic($topic_slug) {
+    $conn = getDBConnection();
+    $posts = [];
+
+    $sql = "SELECT p.id, p.title, p.slug, p.image, p.body, p.published, p.created_at, p.updated_at,
+                   u.username AS author, t.name AS topic
+            FROM posts p
+            INNER JOIN post_topic pt ON p.id = pt.post_id
+            INNER JOIN topics t ON pt.topic_id = t.id
+            LEFT JOIN users u ON p.user_id = u.id
+            WHERE t.slug = ?
+            ORDER BY p.created_at DESC";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        // Gestion d'erreur simple
+        die("Erreur préparation requête : " . $conn->error);
+    }
+    $stmt->bind_param("s", $topic_slug);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $posts[] = $row;
+        }
+    }
+
+    $stmt->close();
+    $conn->close();
+
+    return $posts;
+}
 
 ?>
 

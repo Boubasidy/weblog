@@ -2,9 +2,6 @@
 session_start();
 include('../config.php');
 include('../includes/admin_functions.php');
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 // Traitement du formulaire
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
@@ -41,8 +38,8 @@ if (isset($_GET['edit-admin'])) {
 </head>
 
 <body>
-<?php include(ROOT_PATH . '/includes/admin/header.php') ?>
-<h2 style="text-align: center;">Modifier Utilisateur</h2>
+    <?php include(ROOT_PATH . '/includes/admin/header.php') ?>
+    <h2 style="text-align: center;">Modifier Utilisateur</h2>
 
     <?php if (!empty($errors)): ?>
         <div class="error">
@@ -72,4 +69,5 @@ if (isset($_GET['edit-admin'])) {
 
     <p style="text-align : center;"><a href="users.php">← Retour à la liste</a></p>
 </body>
+
 </html>

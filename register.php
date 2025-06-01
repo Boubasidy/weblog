@@ -1,5 +1,7 @@
 <?php
-include('config.php');
+error_reporting(E_ALL); // Signale toutes les erreurs
+ini_set('display_errors', '1'); 
+include_once(__DIR__ . '/config.php');
 include(ROOT_PATH . '/includes/admin_functions.php');
 include(ROOT_PATH . '/admin/post_functions.php');
 // Connexion à la base de données
@@ -21,8 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
     $user_type = $_POST['user_type'] ?? '';
-    $topic_type = $_POST['topic_type'] ?? '';
-
     // Validation simple
     if (empty($username)) {
         $errors[] = "Le nom d'utilisateur est requis.";
@@ -46,16 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($user_type) || !in_array($user_type, ['author', 'subscriber'])) {
         $errors[] = "Le type d'utilisateur est requis et doit être valide.";
     }
-
-    // Si subscriber, topic_type est requis
-    if ($user_type === 'subscriber') {
-        if (empty($topic_type) || !in_array($topic_type, ['journal', 'motivation', 'inspiration', 'conseil'])) {
-            $errors[] = "Le type de topic est requis pour un abonné.";
-        }
-    } else {
-        $topic_type = null; // pas applicable si author
-    }
-
     // Vérifier que le username ou l’email n’existent pas déjà
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
@@ -103,10 +93,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Ici, tu peux décider si tu annules l'inscription ou pas
                 }
             }
+            // ✅ Insérer aussi le rôle pour author
+            else {
+                $role_stmt = $conn->prepare("SELECT id FROM roles WHERE name = ?");
+                $role_stmt->bind_param("s", $user_type);
+                $role_stmt->execute();
+                $role_stmt->bind_result($role_id);
 
+                if ($role_stmt->fetch()) {
+                    $role_stmt->close();
+
+                    $insert_role_stmt = $conn->prepare("INSERT INTO role_user (user_id, role_id) VALUES (?, ?)");
+                    $insert_role_stmt->bind_param("ii", $user_id, $role_id);
+                    $insert_role_stmt->execute();
+                    $insert_role_stmt->close();
+                } else {
+                    $errors[] = "Le rôle pour author est invalide.";
+                    $role_stmt->close();
+                }
+            }
             if (empty($errors)) {
                 $safe_topic_type = urlencode($topic_type);
-                header("Location: login.php?topic_type=$safe_topic_type");
+                header("Location: index.php");
                 exit;
             }
 
@@ -137,70 +145,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php include(ROOT_PATH . '/includes/public/navbar.php'); ?>
     <h2 style="text-align:center;">Inscription</h2>
 
-    <form method="post" action="register.php">
-        <?php if (!empty($errors)) : ?>
-            <div class="error">
-                <ul>
-                    <?php foreach ($errors as $error) : ?>
-                        <li><?= htmlspecialchars($error) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+   <form method="post" action="register.php">
+    <?php if (!empty($errors)) : ?>
+        <div class="error">
+            <ul>
+                <?php foreach ($errors as $error) : ?>
+                    <li><?= htmlspecialchars($error) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
-        <input type="text" name="username" placeholder="Nom d'utilisateur" value="<?= htmlspecialchars($username) ?>" required>
-        <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($email) ?>" required>
-        <input type="password" name="password" placeholder="Mot de passe" required>
-        <input type="password" name="password_confirm" placeholder="Confirmer mot de passe" required>
+    <input type="text" name="username" placeholder="Nom d'utilisateur" value="<?= htmlspecialchars($username) ?>" required>
+    <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($email) ?>" required>
+    <input type="password" name="password" placeholder="Mot de passe" required>
+    <input type="password" name="password_confirm" placeholder="Confirmer mot de passe" required>
 
-        <select name="user_type" id="user_type" required>
-            <option value="">--Type d'utilisateur--</option>
-            <option value="author" <?= ($user_type === 'author') ? 'selected' : '' ?>>Author</option>
-            <option value="subscriber" <?= ($user_type === 'subscriber') ? 'selected' : '' ?>>Subscriber</option>
-        </select>
+    <select name="user_type" id="user_type" required>
+        <option value="">--Type d'utilisateur--</option>
+        <option value="author" <?= ($user_type === 'author') ? 'selected' : '' ?>>Author</option>
+        <option value="subscriber" <?= ($user_type === 'subscriber') ? 'selected' : '' ?>>Subscriber</option>
+    </select>
 
-        <div id="topic-container" style="display: none; margin-top:10px;">
-            <select name="topic_type" id="topic_type">
-            <option value="">--Type de topic--</option>
-            <?php foreach ($topics as $topic): ?>
-                <?php
-                    $value = $topic['slug'];
-                    $label = ucfirst($topic['name']);
-                    $selected = ($topic_type === $value) ? 'selected' : '';
-                ?>
-                <option value="<?= htmlspecialchars($value) ?>" <?= $selected ?>>
-                    <?= htmlspecialchars($label) ?>
-                </option>
-        <?php endforeach; ?>
-</select>
-
-        <button type="submit">S'inscrire</button>
-    </form>
-
-    <p style="text-align:center;">
-        Déjà membre ? <a href="login.php">Se connecter</a>
-    </p>
-
-    <script>
-        const userTypeSelect = document.getElementById('user_type');
-        const topicContainer = document.getElementById('topic-container');
-        const topicSelect = document.getElementById('topic_type');
-
-        function toggleTopicSelect() {
-            if(userTypeSelect.value === 'subscriber') {
-                topicContainer.style.display = 'block';
-                topicSelect.setAttribute('required', 'required');
-            } else {
-                topicContainer.style.display = 'none';
-                topicSelect.removeAttribute('required');
-                topicSelect.value = '';
-            }
-        }
-
-        userTypeSelect.addEventListener('change', toggleTopicSelect);
-
-        // Affiche correctement au chargement si formulaire renvoyé avec erreurs
-        window.addEventListener('load', toggleTopicSelect);
-    </script>
-</body>
-</html>
+    <button type="submit" style="margin-top: 15px;">S'inscrire</button>
+</form>
+                </body>
+                </html>

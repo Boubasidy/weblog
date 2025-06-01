@@ -1,7 +1,4 @@
 <?php
-session_start();
-include('../config.php');
-
 // Connexion à la base, à appeler dans les fonctions
 function getDBConnection() {
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);

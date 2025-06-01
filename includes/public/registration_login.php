@@ -41,7 +41,7 @@ if (isset($_POST['login_btn'])) {
                 // Login OK
                 $_SESSION['user_id'] = $id;
                 $_SESSION['username'] = $db_username;
-                $_SESSION['role'] = $db_role;  // Stocke le rôle en session
+                $_SESSION['role'] = $db_role;  // Stocke le rôle en sessio
 
                 $stmt->close();
                 $conn->close();
@@ -49,8 +49,6 @@ if (isset($_POST['login_btn'])) {
                 // Redirection selon rôle
                 if ($db_role === 'Admin') {
                     header('Location: ../weblog_v0/admin/dashboard.php');
-                } else {
-                    header('Location: index.php');
                 }
                 exit;
             } else {
