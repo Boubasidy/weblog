@@ -1,10 +1,10 @@
 ## Projet Web - Gestion d'Utilisateurs avec Rôles (Docker + PHP + MariaDB)
 
 Réalisé par
-- Youssef (ImJoe
+- Youssef (ImJoeMz)
 - Boubasidy
 
-## 🎯 Objectif du projet
+##  Objectif du projet
 Développer une application web en PHP permettant :
 - l’authentification d’utilisateurs,
 - la gestion des rôles (`Administrateur`, `Auteur`, `Abonné`),
@@ -14,7 +14,7 @@ Le projet repose sur un environnement Docker complet pour simplifier l’install
 
 ---
 
-## ⚙️ Technologies utilisées
+## Technologies utilisées
 
 - **PHP** (backend)
 - **HTML/CSS** (frontend)
@@ -24,7 +24,7 @@ Le projet repose sur un environnement Docker complet pour simplifier l’install
 
 ---
 
-## 🚀 Fonctionnalités principales
+##  Fonctionnalités principales
 
 - Système de connexion / déconnexion sécurisé
 - Redirection automatique selon le rôle (admin / auteur / abonné)
