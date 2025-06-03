@@ -19,7 +19,7 @@
                 font-size: 14px;
                 transition: background-color 0.3s ease;
             " onmouseover="this.style.backgroundColor='#c82333'" onmouseout="this.style.backgroundColor='#dc3545'">
-                🔒✅ Logout
+                🔒 Logout
             </a>
         </div>
     <?php endif; ?>

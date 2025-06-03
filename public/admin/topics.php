@@ -43,7 +43,7 @@ $topics = getAllTopics();
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         background: #f9f9f9;
-        margin: 0; padding: 20px;
+        margin: 0; padding: 0;
     }
     .container {
         max-width: 900px;
@@ -139,14 +139,11 @@ $topics = getAllTopics();
 </style>
 </head>
 <body>
-
-<?php include(ROOT_PATH . '/includes/admin/header.php'); ?>
-
-<div class="container content">	
-<?php include(ROOT_PATH . '/includes/admin/menu.php') ?>
+    <?php include(ROOT_PATH . '/includes/admin/header.php'); ?>
+    <div class="container content">	
+    <?php include(ROOT_PATH . '/includes/admin/menu.php') ?>
     <div class="form-container">
         <h2>Ajouter un nouveau topic</h2>
-
         <?php if (!empty($errors)): ?>
             <div class="error">
                 <ul>

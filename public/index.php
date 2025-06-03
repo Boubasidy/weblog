@@ -107,7 +107,34 @@ if (session_status() === PHP_SESSION_NONE) {
 
         .btn-display:hover {
             background-color: #007f63;
+
         }
+
+        .table-div {
+            margin-top: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .table th, .table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+
     </style>
 </head>
 
@@ -128,8 +155,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
         <!-- content -->
         <div class="content">
-            <h2 class="content-title">Recent Articles</h2>
-            <hr>
+
 
             <?php
             // Logique d’affichage principale
@@ -140,52 +166,97 @@ if (session_status() === PHP_SESSION_NONE) {
                 // Visiteur non connecté => affiche tous les posts
                 $posts = getAllPosts();
                 displayPostsTable($posts);
-            } else {
-                if ($_SESSION["role"] === "Subscriber") {
-                    // Abonné connecté
+            } elseif ($_SESSION["role"] === "Subscriber") {
+                // Abonné connecté
+                echo '<h2 class="content-title">Recent Articles</h2>';
+                echo '<hr>';
+                // Récupérer la liste des topics
+                $topics = getAllTopics();
 
-                    // Récupérer la liste des topics
-                    $topics = getAllTopics();
+                // Récupérer topic sélectionné dans l'URL (ex: ?topic=motivation)
+                $selected_topic = $_GET['topic'] ?? null;
 
-                    // Récupérer topic sélectionné dans l'URL (ex: ?topic=motivation)
-                    $selected_topic = $_GET['topic'] ?? null;
-
-                    if (!$selected_topic) {
-                        // Pas de topic sélectionné => afficher liste des topics pour choix
-                        echo '<div class="topic-list">';
-                        echo '<p>Choisissez un topic :</p>';
-                        foreach ($topics as $topic) {
-                            $topic_slug = htmlspecialchars($topic['slug']);
-                            $topic_name = ucfirst(htmlspecialchars($topic['name']));
-                            echo "<a href=\"?topic=$topic_slug\">" . $topic_name . "</a>";
-                        }
-                        echo '</div>';
-                    } else {
-                        // Topic sélectionné => afficher les posts liés à ce topic
-                        $posts = getPostsByTopic($selected_topic);
-                        echo "<h3>Articles du topic : " . ucfirst(htmlspecialchars($selected_topic)) . "</h3>";
-                        displayPostsTable($posts);
-
-                        // Lien retour vers liste topics
-                        echo '<p><a href="index.php">← Choisir un autre topic</a></p>';
+                if (!$selected_topic) {
+                    // Pas de topic sélectionné => afficher liste des topics pour choix
+                    echo '<div class="topic-list">';
+                    echo '<p>Choisissez un topic :</p>';
+                    foreach ($topics as $topic) {
+                        $topic_slug = htmlspecialchars($topic['slug']);
+                        $topic_name = ucfirst(htmlspecialchars($topic['name']));
+                        echo "<a href=\"?topic=$topic_slug\">" . $topic_name . "</a>";
                     }
-
-                    // Si post_id est passé, récupérer ce post pour affichage
-                    if (isset($_GET['post_id'])) {
-                        $post_id = intval($_GET['post_id']);
-                        $post_to_show = getPostById($post_id);
-                    }
+                    echo '</div>';
                 } else {
-                    // Autres types d'utilisateur (ex: author) : afficher tous les posts
-                    $posts = getAllPosts();
+                    // Topic sélectionné => afficher les posts liés à ce topic
+                    $posts = getPostsByTopic($selected_topic);
+                    echo "<h3>Articles du topic : " . ucfirst(htmlspecialchars($selected_topic)) . "</h3>";
+                    displayPostsTable($posts);
+
+                    // Lien retour vers liste topics
+                    echo '<p><a href="index.php">← Choisir un autre topic</a></p>';
+                }
+
+                // Si post_id est passé, récupérer ce post pour affichage
+                if (isset($_GET['post_id'])) {
+                    $post_id = intval($_GET['post_id']);
+                    $post_to_show = getPostById($post_id);
+                }
+            } 
+            //condition : affichage de la pagepour un AUTHOR
+            elseif ($_SESSION["role"] === "Author") {
+                // Onglet actif (par défaut : 'recent')
+                $tab = $_GET['tab'] ?? 'recent';
+
+                // Affichage des boutons
+                echo '<div style="margin-bottom: 20px;">';
+                echo '<a href="?tab=recent" class="btn-display" style="margin-right: 10px;">Articles récents</a>';
+                echo '<a href="?tab=create" class="btn-display" style="margin-right: 10px;">Créer un post</a>';
+                echo '<a href="?tab=subscribers" class="btn-display">Abonnés</a>';
+                echo '</div>';
+
+                $user_id = $_SESSION['user']['id'];
+
+                // Onglet actif
+                //$tab = $_GET['tab'] ?? 'recent';
+
+                // Afficher le contenu selon l'onglet
+                if ($tab === 'recent') {
+                    $posts = getPostsByAuthorId($user_id);
                     displayPostsTable($posts);
 
                     if (isset($_GET['post_id'])) {
                         $post_id = intval($_GET['post_id']);
                         $post_to_show = getPostById($post_id);
                     }
+                } elseif ($tab === 'create') {
+                    include(ROOT_PATH . '/admin/author_create_post.php');
+                } elseif ($tab === 'subscribers') {
+                    $subscribers = getSubscribers();
+
+                    echo '<div class="table-div">';
+                    echo '<h2>Abonnés</h2>';
+                    if (empty($subscribers)) {
+                        echo '<h3>Aucun abonné trouvé.</h3>';
+                    } else {
+                        echo '<table class="table">';
+                        echo '<thead><tr><th>N°</th><th>Nom d’utilisateur</th><th>Email</th></tr></thead>';
+                        echo '<tbody>';
+                        foreach ($subscribers as $index => $subscriber) {
+                            echo '<tr>';
+                            echo '<td>' . ($index + 1) . '</td>';
+                            echo '<td>' . htmlspecialchars($subscriber['username']) . '</td>';
+                            echo '<td>' . htmlspecialchars($subscriber['email']) . '</td>';
+                            echo '</tr>';
+                        }
+                        echo '</tbody></table>';
+                    }
+                    echo '</div>';
+
                 }
+
             }
+
+            
 
             // Afficher le contenu du post sélectionné en dessous du tableau, s’il y en a un
             if ($post_to_show) {

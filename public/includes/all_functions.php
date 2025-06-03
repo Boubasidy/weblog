@@ -70,7 +70,7 @@ function displayPostContent($post)
     echo '<div class="post-content">';
     echo '<h2>' . htmlspecialchars($post['title']) . '</h2>';
     echo '<p><strong>Auteur :</strong> ' . htmlspecialchars($post['author']) . '</p>';
-    echo '<p><strong>Topic :</strong> ' . htmlspecialchars($post['topic']) . '</p>';
+    echo '<p><strong>Topic :</strong> ' . (isset($post['topic']) ? htmlspecialchars($post['topic']) : 'Non spécifié') . '</p>';
     echo '<p><strong>Date :</strong> ' . htmlspecialchars($post['created_at']) . '</p>';
     echo '<p><strong>Mis à jour le :</strong> ' . htmlspecialchars($post['updated_at']) . '</p>';
 

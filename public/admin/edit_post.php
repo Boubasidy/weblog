@@ -2,11 +2,9 @@
 include('../config.php');
 include_once(ROOT_PATH . '/includes/admin_functions.php');
 include(ROOT_PATH . '/admin/post_functions.php');
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start(); // DCKR : Sécurisation du démarrage de session
 }
-
 // Initialiser variables
 $errors = [];
 $post = [];
@@ -113,7 +111,7 @@ include(ROOT_PATH . '/includes/admin/head_section.php');
 
     <div class="form-group">
         <label>Vues</label>
-        <input type="number" name="views" value="<?= e($post['views']) ?>" min="0">
+        <input type="number" name="views" value="<?php echo e($post['views'] ?? 0); ?>" min="0">
     </div>
 
     <div class="form-group">

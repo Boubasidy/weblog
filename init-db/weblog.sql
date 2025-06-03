@@ -184,7 +184,7 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `created_at`, `updat
 (20, 'youssef', 'youssef@gmail.com', '$2y$10$MiPGu8dYvGn2GGGWdZsC0.Y.ibFk3r.howU1qi/swlkrXDmOhRg12', '2025-05-23 15:16:11', NULL),
 (24, 'abonne1', 'ab@gmail.com', '$2y$10$MJSFCaTXULnS3kIMnHoMxu5SX.r1cGDkX/Za.o9e9WKt23lfm9D2S', '2025-05-26 11:15:40', NULL),
 (25, 'abonne', 'abonne@gmail.com', '$2y$10$3qpbZfearenNQUUCQZPyoeVEJPdsq6SjEiwstPehE51wNDQYhc7i6', '2025-05-26 22:17:22', NULL),
-(27, 'Bouba', 'boubasidy18@gmail.com', '$2y$10$PK/6n1NYo8fb4iZWKDItKOSZYrBPkYtv2qeJdPY02R9acXdwRDITS', '2025-05-26 23:06:03', NULL),
+(27, 'Bouba', 'bouba@gmail.com', '$2y$10$PK/6n1NYo8fb4iZWKDItKOSZYrBPkYtv2qeJdPY02R9acXdwRDITS', '2025-05-26 23:06:03', NULL),
 (31, 'marc', 'marc@gmail.com', '$2y$10$ckWKW.JeauwbbtyX3vamhuqAGPAfudJtSSeUrYyWPEgU1MKFI71IO', '2025-05-27 07:41:40', NULL),
 (32, 'jack', 'jack@gmail.com', '$2y$10$j/GbUQJD38cwJAVHBrxrse87z7ZU2wLVD.2seyXUOBxJ19g3z9tee', '2025-05-27 08:56:17', NULL),
 (33, 'pierre', 'pierre@gmail.com', '$2y$10$MTDVDaqk/foTSo2wKndSxeBVPchoBGFbqdUDHoXMrgWgi3tztO8OC', '2025-05-27 09:16:33', NULL);

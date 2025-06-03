@@ -53,6 +53,7 @@ function createPost($user_id, $title, $slug, $image, $body, $published, $topic_i
     $post_id = $stmt->insert_id;
     $stmt->close();
 
+    // Lier le post au topic
     $sql2 = "INSERT INTO post_topic (post_id, topic_id) VALUES (?, ?)";
     $stmt2 = $conn->prepare($sql2);
     if (!$stmt2) {
@@ -68,12 +69,31 @@ function createPost($user_id, $title, $slug, $image, $body, $published, $topic_i
         $conn->close();
         return false;
     }
-
     $stmt2->close();
+
+    // Ajouter dans post_user
+    $sql3 = "INSERT INTO post_user (post_id, user_id) VALUES (?, ?)";
+    $stmt3 = $conn->prepare($sql3);
+    if (!$stmt3) {
+        die("Erreur préparation (post_user) : " . $conn->error);
+    }
+
+    $stmt3->bind_param("ii", $post_id, $user_id);
+    $success_user = $stmt3->execute();
+
+    if (!$success_user) {
+        echo "Erreur lors de l'association post/user : " . $stmt3->error;
+        $stmt3->close();
+        $conn->close();
+        return false;
+    }
+
+    $stmt3->close();
     $conn->close();
 
     return $post_id;
 }
+
 
 // Supprime un post par son ID
 function deletePosteById($id)
@@ -219,6 +239,53 @@ function getAllPosts()
     $conn->close();
     return $posts;
 }
+
+//fonction qui recupère tous les posts publié par un user (id_user)
+function getPostsByAuthorId($author_id)
+{
+    $conn = getDBConnection();
+    $posts = [];
+
+    $sql = "SELECT 
+                p.id, 
+                p.title, 
+                p.slug, 
+                p.image, 
+                p.body, 
+                p.published, 
+                p.created_at, 
+                p.updated_at,
+                GROUP_CONCAT(DISTINCT u.username SEPARATOR ', ') AS author,
+                t.name AS topic
+            FROM posts p
+            LEFT JOIN post_user pu ON p.id = pu.post_id
+            LEFT JOIN users u ON pu.user_id = u.id
+            LEFT JOIN post_topic pt ON p.id = pt.post_id
+            LEFT JOIN topics t ON pt.topic_id = t.id
+            WHERE pu.user_id = ?
+            GROUP BY p.id
+            ORDER BY p.created_at DESC";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $author_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $posts[] = $row;
+        }
+    }
+
+    $stmt->close();
+    $conn->close();
+
+    return $posts;
+}
+
+
+//fonction qui recupère tous les subscribers
+
 
 // Récupère tous les posts d’un topic donné
 function getPostsByTopic($topic_slug)

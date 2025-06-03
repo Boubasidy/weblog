@@ -31,6 +31,33 @@ function e($string) {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+//fonction pour recupérer tous les Subscribers
+function getSubscribers()
+{
+    $conn = getDBConnection();
+
+    $sql = "SELECT users.id, users.username, users.email
+            FROM users
+            JOIN role_user ON users.id = role_user.user_id
+            JOIN roles ON role_user.role_id = roles.id
+            WHERE roles.name = 'Subscriber'";
+
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        die("Erreur récupération abonnés : " . $conn->error);
+    }
+
+    $subscribers = [];
+    while ($row = $result->fetch_assoc()) {
+        $subscribers[] = $row;
+    }
+
+    $conn->close();
+    return $subscribers;
+}
+
+
 // Récupérer tous les utilisateurs
 function getAllUsers() {
     $conn = getDBConnection();
