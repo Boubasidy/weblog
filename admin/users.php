@@ -2,7 +2,7 @@
 session_start();
 include('../config.php');
 include __DIR__ . '/../includes/admin_functions.php';
-include __DIR__ . '/../includes/public/functions.php';
+include __DIR__ . '/../includes/public/all_functions.php';
 
 
 // Suppression d’un utilisateur admin
